@@ -7,3 +7,4 @@ This workspace contains 3 directories:
 SCRIPTS
 
 This is a blockchain build for a Coin variable and this one can makes simple transaction such as check, send or cancel transactions.
+Made with https://remix.ethereum.org/ .
