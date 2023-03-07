@@ -1,0 +1,39 @@
+//SPDX-Licence-Identifier: GPL-3.0       
+pragma solidity ^0.8.4;
+
+contract Coin {
+// Definite a Coin value
+address public minter;
+mapping (adress => uint) public balances;
+
+// React to changes
+    event Sent(address from, address to, uint amount);
+
+// Call the constructer during the contract creation
+    constructor() {
+        minter = msg.sender;
+    }
+
+// Create a new coin on a definite adress
+    function mint(address receiver, uint amount) public {
+        require(msg.sender == minter);
+        balances[receiver] += amount;
+    }
+
+// Operation fail and reasons why
+    error InsufficientBalance(uint requested, uint available);
+
+// Revert the transaction with an error message
+// Transfer coin to the receiver adress
+    function send(address receiver, uint amount) public {
+        if (amount > balances[msg.sender])
+            revert InsufficientBalance({
+                requested: amount,
+                available: balances[msg.sender]
+            });
+
+        balances[msg.sender] -= amount;
+        balances[receiver] += amount;
+        emit Sent(msg.sender, receiver, amount);
+    }
+}
