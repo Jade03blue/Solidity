@@ -1,0 +1,51 @@
+// SPDX-License-Identifier: GPL-3.0
+
+pragma solidity >=0.7.0 <0.9.0;
+import "remix_tests.sol"; // this import is automatically injected by Remix.
+import "hardhat/console.sol";
+import "../contracts/3_Ballot.sol";
+
+contract BallotTest {
+
+    bytes32[] proposalNames;
+
+    Ballot ballotToTest;
+    function beforeAll () public {
+        proposalNames.push(bytes32("candidate1"));
+        ballotToTest = new Ballot(proposalNames);
+    }
+
+    function checkWinningProposal () public {
+        console.log("Running checkWinningProposal");
+        ballotToTest.vote(0);
+        Assert.equal(ballotToTest.winningProposal(), uint(0), "proposal at index 0 should be the winning proposal");
+        Assert.equal(ballotToTest.winnerName(), bytes32("candidate1"), "candidate1 should be the winner name");
+    }
+
+    function checkWinninProposalWithReturnValue () public view returns (bool) {
+        return ballotToTest.winningProposal() == 0;
+    }
+}
+
+// Right click on the script name and hit "Run" to execute
+const { expect } = require("chai");
+const { ethers } = require("hardhat");
+
+describe("Storage", function () {
+  it("test initial value", async function () {
+    const Storage = await ethers.getContractFactory("Storage");
+    const storage = await Storage.deploy();
+    await storage.deployed();
+    console.log('storage deployed at:'+ storage.address)
+    expect((await storage.retrieve()).toNumber()).to.equal(0);
+  });
+   it("test updating and retrieving updated value", async function () {
+    const Storage = await ethers.getContractFactory("Storage");
+    const storage = await Storage.deploy();
+    await storage.deployed();
+    const storage2 = await ethers.getContractAt("Storage", storage.address);
+    const setValue = await storage2.store(56);
+    await setValue.wait();
+    expect((await storage2.retrieve()).toNumber()).to.equal(56);
+  });
+});
