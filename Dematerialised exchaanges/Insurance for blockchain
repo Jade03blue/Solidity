@@ -1,0 +1,81 @@
+pragma solidity ^0.8.0;
+
+// Define a struct to hold policy information
+struct Policy {
+    uint256 id;
+    string name;
+    uint256 premium;
+    uint256 payout;
+    uint256 startDate;
+    uint256 endDate;
+    bool active;
+}
+
+contract InsurancePlatform {
+    address public owner;
+    Policy[] public policies;
+
+    // Define an event for when a new policy is added
+    event NewPolicy(uint256 indexed id, string name, uint256 premium, uint256 payout, uint256 startDate, uint256 endDate, bool active);
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    // Add a new policy to the platform
+    function addPolicy(string memory name, uint256 premium, uint256 payout, uint256 startDate, uint256 endDate, bool active) public {
+        require(msg.sender == owner, "Only the owner can add a new policy");
+        uint256 id = policies.length;
+        Policy memory policy = Policy(id, name, premium, payout, startDate, endDate, active);
+        policies.push(policy);
+        emit NewPolicy(id, name, premium, payout, startDate, endDate, active);
+    }
+
+    // Get the total number of policies
+    function getPolicyCount() public view returns (uint256) {
+        return policies.length;
+    }
+
+    // Get policy details by ID
+    function getPolicy(uint256 id) public view returns (string memory name, uint256 premium, uint256 payout, uint256 startDate, uint256 endDate, bool active) {
+        require(id < policies.length, "Invalid policy ID");
+        Policy memory policy = policies[id];
+        return (policy.name, policy.premium, policy.payout, policy.startDate, policy.endDate, policy.active);
+    }
+
+    // Purchase a policy
+    function purchasePolicy(uint256 id) public payable {
+        require(id < policies.length, "Invalid policy ID");
+        Policy storage policy = policies[id];
+        require(policy.active, "Policy is not active");
+        require(msg.value == policy.premium, "Premium amount is incorrect");
+        require(block.timestamp >= policy.startDate, "Policy has not started yet");
+        require(block.timestamp <= policy.endDate, "Policy has expired");
+
+        // Transfer the premium to the owner
+        payable(owner).transfer(msg.value);
+
+        // Store the policy information in a mapping
+        mapping(address => Policy) userPolicies;
+        userPolicies[msg.sender] = policy;
+    }
+
+    // Get the policy for a specific user
+    function getUserPolicy() public view returns (string memory name, uint256 premium, uint256 payout, uint256 startDate, uint256 endDate, bool active) {
+        Policy memory policy = userPolicies[msg.sender];
+        return (policy.name, policy.premium, policy.payout, policy.startDate, policy.endDate, policy.active);
+    }
+
+    // Claim a payout for a policy
+    function claimPayout() public {
+        Policy storage policy = userPolicies[msg.sender];
+        require(policy.active, "No active policy found");
+        require(block.timestamp >= policy.endDate, "Policy is still active");
+
+        // Transfer the payout to the user
+        payable(msg.sender).transfer(policy.payout);
+
+        // Mark the policy as inactive
+        policy.active = false;
+    }
+}
