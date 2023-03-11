@@ -1,0 +1,30 @@
+pragma solidity ^0.8.0;
+
+contract CloudStorage {
+    struct File {
+        string name;
+        string ipfsHash;
+        uint timestamp;
+    }
+
+    mapping (address => mapping (uint => File)) private files;
+
+    function uploadFile(string memory name, string memory ipfsHash) public {
+        uint fileId = getFileCount(msg.sender) + 1;
+        files[msg.sender][fileId] = File(name, ipfsHash, block.timestamp);
+    }
+
+    function getFile(address owner, uint fileId) public view returns (string memory, string memory, uint) {
+        File memory file = files[owner][fileId];
+        return (file.name, file.ipfsHash, file.timestamp);
+    }
+
+    function getFileCount(address owner) public view returns (uint) {
+        uint count = 0;
+        while (true) {
+            if (bytes(files[owner][count + 1].name).length == 0) {
+                return count;
+            }
+            count++;
+        }
+    }
