@@ -1,0 +1,47 @@
+pragma solidity ^0.8.0;
+
+contract FraudDetection {
+
+    // Struct to represent a transaction
+    struct Transaction {
+        uint256 amount;
+        address from;
+        address to;
+        bool isFraudulent;
+    }
+
+    // Mapping to store all transactions
+    mapping(uint256 => Transaction) public transactions;
+    uint256 public numTransactions;
+
+    // Event to log fraudulent transaction
+    event FraudulentTransaction(uint256 indexed transactionId);
+
+    // Function to add a transaction
+    function addTransaction(uint256 _amount, address _from, address _to) public {
+        transactions[numTransactions] = Transaction(_amount, _from, _to, false);
+        numTransactions++;
+    }
+
+    // Function to detect fraudulent transactions
+    function detectFraud() public {
+        // Implement machine learning algorithm to detect fraudulent transactions
+        // Mark fraudulent transactions as isFraudulent = true
+        // Emit FraudulentTransaction event for each fraudulent transaction
+        for(uint256 i = 0; i < numTransactions; i++) {
+            if(transactions[i].isFraudulent == false) {
+                if(detectFraudML(transactions[i])) {
+                    transactions[i].isFraudulent = true;
+                    emit FraudulentTransaction(i);
+                }
+            }
+        }
+    }
+
+    // Function to implement machine learning algorithm for fraud detection
+    function detectFraudML(Transaction memory _transaction) private pure returns(bool) {
+        // Implement machine learning algorithm to detect fraudulent transactions
+        // Return true if transaction is fraudulent, false otherwise
+        return false;
+    }
+}
