@@ -1,0 +1,73 @@
+pragma solidity ^0.8.0;
+
+contract PeerToPeerLending {
+
+    address payable public owner;
+
+    uint256 public totalLoans;
+    uint256 public totalAmountLoaned;
+
+    mapping(uint256 => Loan) public loans;
+    mapping(address => uint256[]) public borrowerLoans;
+    mapping(address => uint256[]) public lenderLoans;
+
+    struct Loan {
+        address payable borrower;
+        address payable lender;
+        uint256 amount;
+        uint256 interestRate;
+        uint256 loanDuration;
+        uint256 startDate;
+        uint256 endDate;
+        bool repaid;
+    }
+
+    event LoanCreated(uint256 loanId, address borrower, address lender, uint256 amount, uint256 interestRate, uint256 loanDuration, uint256 startDate);
+    event LoanRepaid(uint256 loanId, address borrower, address lender, uint256 amount);
+
+    constructor() {
+        owner = payable(msg.sender);
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner can perform this action");
+        _;
+    }
+
+    function createLoan(address payable _borrower, uint256 _amount, uint256 _interestRate, uint256 _loanDuration) public payable returns (uint256) {
+        require(msg.value == _amount, "Amount sent does not match loan amount");
+        uint256 loanId = totalLoans++;
+        uint256 startDate = block.timestamp;
+        uint256 endDate = startDate + (_loanDuration * 1 days);
+        Loan memory loan = Loan(_borrower, payable(msg.sender), _amount, _interestRate, _loanDuration, startDate, endDate, false);
+        loans[loanId] = loan;
+        borrowerLoans[_borrower].push(loanId);
+        lenderLoans[msg.sender].push(loanId);
+        totalAmountLoaned += _amount;
+        emit LoanCreated(loanId, _borrower, msg.sender, _amount, _interestRate, _loanDuration, startDate);
+        return loanId;
+    }
+
+    function repayLoan(uint256 _loanId) public payable {
+        Loan storage loan = loans[_loanId];
+        require(msg.sender == loan.borrower, "Only the borrower can repay the loan");
+        require(msg.value == loan.amount, "Amount sent does not match loan amount");
+        require(!loan.repaid, "Loan already repaid");
+        loan.repaid = true;
+        loan.lender.transfer(msg.value);
+        emit LoanRepaid(_loanId, loan.borrower, loan.lender, msg.value);
+    }
+
+    function getBorrowerLoans(address _borrower) public view returns (uint256[] memory) {
+        return borrowerLoans[_borrower];
+    }
+
+    function getLenderLoans(address _lender) public view returns (uint256[] memory) {
+        return lenderLoans[_lender];
+    }
+
+    function withdrawFunds() public onlyOwner {
+        owner.transfer(address(this).balance);
+    }
+
+}
