@@ -1,0 +1,42 @@
+pragma solidity ^0.8.0;
+
+contract CryptoExchange {
+    mapping(address => uint) balances;
+
+    function deposit() public payable {
+        balances[msg.sender] += msg.value;
+    }
+
+    function withdraw(uint amount) public {
+        require(balances[msg.sender] >= amount, "Insufficient balance");
+        balances[msg.sender] -= amount;
+        payable(msg.sender).transfer(amount);
+    }
+
+    function exchange(uint amount, address recipient) public {
+        require(balances[msg.sender] >= amount, "Insufficient balance");
+        balances[msg.sender] -= amount;
+        balances[recipient] += amount;
+    }
+
+    function getBalance() public view returns (uint) {
+        return balances[msg.sender];
+    }
+
+    function add(uint a, uint b) public pure returns (uint) {
+        return a + b;
+    }
+
+    function subtract(uint a, uint b) public pure returns (uint) {
+        return a - b;
+    }
+
+    function multiply(uint a, uint b) public pure returns (uint) {
+        return a * b;
+    }
+
+    function divide(uint a, uint b) public pure returns (uint) {
+        require(b > 0, "Division by zero");
+        return a / b;
+    }
+}
