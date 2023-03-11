@@ -1,0 +1,73 @@
+pragma solidity ^0.8.0;
+
+contract BlockchainTool {
+    struct Transaction {
+        address buyer;
+        string country;
+        uint amount;
+        string offer;
+        uint timestamp;
+    }
+
+    Transaction[] public transactions;
+    mapping(address => uint[]) public buyerTransactions;
+
+    event NewTransaction(
+        uint indexed transactionId,
+        address indexed buyer,
+        string country,
+        uint amount,
+        string offer,
+        uint timestamp
+    );
+
+    function addTransaction(string memory _country, uint _amount, string memory _offer) public {
+        Transaction memory newTransaction = Transaction({
+            buyer: msg.sender,
+            country: _country,
+            amount: _amount,
+            offer: _offer,
+            timestamp: block.timestamp
+        });
+
+        uint transactionId = transactions.length;
+        transactions.push(newTransaction);
+        buyerTransactions[msg.sender].push(transactionId);
+
+        emit NewTransaction(transactionId, msg.sender, _country, _amount, _offer, block.timestamp);
+    }
+
+    function getTransactionCount() public view returns (uint) {
+        return transactions.length;
+    }
+
+    function getBuyerTransactionIds() public view returns (uint[] memory) {
+        return buyerTransactions[msg.sender];
+    }
+
+    function getTransaction(uint _transactionId) public view returns (address, string memory, uint, string memory, uint) {
+        require(_transactionId < transactions.length, "Transaction ID does not exist");
+
+        Transaction storage transaction = transactions[_transactionId];
+        return (transaction.buyer, transaction.country, transaction.amount, transaction.offer, transaction.timestamp);
+    }
+
+    function getTransactionByBuyer(uint _buyerTransactionId) public view returns (address, string memory, uint, string memory, uint) {
+        require(_buyerTransactionId < buyerTransactions[msg.sender].length, "Transaction ID does not exist for this buyer");
+
+        uint transactionId = buyerTransactions[msg.sender][_buyerTransactionId];
+        Transaction storage transaction = transactions[transactionId];
+        return (transaction.buyer, transaction.country, transaction.amount, transaction.offer, transaction.timestamp);
+    }
+
+    function getTotalTransactionAmountByCountry(string memory _country) public view returns (uint) {
+        uint totalAmount = 0;
+        for (uint i = 0; i < transactions.length; i++) {
+            if (keccak256(bytes(transactions[i].country)) == keccak256(bytes(_country))) {
+                totalAmount += transactions[i].amount;
+            }
+        }
+
+        return totalAmount;
+    }
+}
